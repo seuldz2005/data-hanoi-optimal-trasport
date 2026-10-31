@@ -1,11 +1,17 @@
-"""Health facility processing (HOT/OSM export).
+"""Health facility + school candidate processing (HOT/OSM export).
 
 Loads OSM-derived health facility points, filters to Hanoi, deduplicates,
 validates coordinates, and exports the standardized facilities CSV.
 Capacity is recorded as MISSING unless a verified source exists.
 
-IMPORTANT: OSM health facilities are crowd-sourced points of interest.
-They are NOT verified vaccination sites. See docs/assumptions.md.
+Case 1 candidate sites combine these health facilities with the Case 2
+school (education) export: school OSM ids are namespaced with a
+``school_`` prefix so they can never collide with health ids, and every
+row is labeled a vaccination CANDIDATE — no site is a confirmed or
+verified vaccination location.
+
+IMPORTANT: OSM health facilities and schools are crowd-sourced points of
+interest. They are NOT verified vaccination sites. See docs/assumptions.md.
 """
 
 from __future__ import annotations
@@ -22,6 +28,16 @@ from .config import get_logger, load_config, output_path
 log = get_logger("facilities")
 
 GEO_SUFFIXES = (".geojson", ".json", ".gpkg", ".shp")
+
+# Namespace prefix for school candidate ids (Case 2 education export).
+SCHOOL_ID_PREFIX = "school_"
+
+# Output schema of the combined Case 1 candidate-site CSV.
+SITE_COLUMNS = (
+    "facility_id", "facility_name", "facility_type",
+    "latitude", "longitude", "capacity", "capacity_source", "source",
+    "site_class", "vaccination_site_status",
+)
 
 
 class FacilityError(RuntimeError):
@@ -247,6 +263,82 @@ def synthetic_capacities(
         "Applied SYNTHETIC capacities to %d facilities - never use as real data", len(out)
     )
     return out
+
+
+def prepare_school_candidates(schools: pd.DataFrame) -> pd.DataFrame:
+    """Namespace school ids and validate them as Case 1 CANDIDATE rows.
+
+    REAL capacity stays missing (NaN) — school seat/vaccination capacity
+    has no verified source.
+
+    Args:
+        schools: Education facilities frame (Case 2 schema: facility_id,
+            facility_name, facility_type, latitude, longitude, ...).
+
+    Returns:
+        Copy with ``facility_id`` prefixed ``school_``, invalid
+        coordinates dropped, capacity/capacity_source reset to missing.
+
+    Raises:
+        FacilityError: On missing columns or if no valid rows remain.
+    """
+    missing = [
+        c for c in ("facility_id", "facility_name", "facility_type", "latitude", "longitude")
+        if c not in schools.columns
+    ]
+    if missing:
+        raise FacilityError(f"School frame missing columns: {missing}")
+    out = schools.copy()
+    ids = out["facility_id"].astype("string").str.strip()
+    if ids.isna().any() or ids.eq("").any() or ids.duplicated().any():
+        raise FacilityError("School IDs must be nonempty and unique")
+    out["facility_id"] = ids.where(ids.str.startswith(SCHOOL_ID_PREFIX), SCHOOL_ID_PREFIX + ids)
+    for col in ("latitude", "longitude"):
+        out[col] = pd.to_numeric(out[col], errors="coerce")
+    out = validate_coordinates(out)
+    out["capacity"] = np.nan
+    out["capacity_source"] = "missing"
+    return out
+
+
+def combine_candidate_sites(
+    health: pd.DataFrame, schools: pd.DataFrame
+) -> pd.DataFrame:
+    """Combine health facilities and school candidates into Case 1 sites.
+
+    Both classes are labeled vaccination CANDIDATES — never confirmed
+    sites. Health ids are preserved verbatim; school ids must already be
+    namespaced (see ``prepare_school_candidates``).
+
+    Args:
+        health: Health facilities frame (Case 1 schema, 8 base columns).
+        schools: School candidates frame (namespaced ids).
+
+    Returns:
+        Combined frame with ``site_class`` and
+        ``vaccination_site_status`` columns, health rows first.
+
+    Raises:
+        FacilityError: On missing columns or id collisions between classes.
+    """
+    for name, frame in (("health", health), ("schools", schools)):
+        missing = [c for c in SITE_COLUMNS[:8] if c not in frame.columns]
+        if missing:
+            raise FacilityError(f"{name} frame missing columns: {missing}")
+    h = health.copy()
+    h["site_class"] = "health_facility"
+    s = schools.copy()
+    s["site_class"] = "school"
+    out = pd.concat([h, s], ignore_index=True)
+    out["facility_id"] = out["facility_id"].astype(str).str.strip()
+    out["vaccination_site_status"] = "candidate"
+    dups = out["facility_id"][out["facility_id"].duplicated()]
+    if not dups.empty:
+        raise FacilityError(
+            "facility_id collision between health facilities and school "
+            f"candidates: {sorted(dups.unique())[:5]} — school ids must be namespaced"
+        )
+    return out[list(SITE_COLUMNS)]
 
 
 def save_facilities(df: pd.DataFrame) -> Path:

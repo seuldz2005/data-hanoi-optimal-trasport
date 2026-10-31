@@ -1,23 +1,26 @@
 {
-  "generated_at_utc": "2026-10-08T05:56:32+00:00",
+  "generated_at_utc": "2026-10-31T20:36:44+00:00",
   "pipeline_version": "0.1.0",
   "study_area": "Hanoi, Vietnam",
-  "case": "Case 1 - children under five -> vaccination sites (MVP)",
+  "case": "Case 1 - children under five -> vaccination candidate sites (health facilities + school candidates)",
   "outputs": {
     "boundaries": "hanoi_boundaries.geojson",
-    "population": "population.csv",
-    "facilities": "facilities.csv",
-    "distance_matrix": "distance_matrix.csv"
+    "population": "case1/population.csv",
+    "facilities": "case1/facilities.csv",
+    "distance_matrix": "case1/distance_matrix.csv"
   },
   "summary": {
     "n_communes": 584,
-    "n_facilities": 320,
-    "total_children_under_5": 720720.35852,
+    "n_facilities": 1804,
+    "total_children_under_5": 720720.0,
     "capacity_available": false,
     "matrix_shape": [
       584,
-      320
-    ]
+      1804
+    ],
+    "n_health_facilities": 320,
+    "n_school_candidates": 1484,
+    "estimated_raster_total_children_under_5": 720720.35852
   },
   "sources": {
     "admin_boundaries": {
@@ -58,6 +61,8 @@
   "population_year": 2020,
   "distance_method": "haversine",
   "distance_unit": "km",
+  "candidate_sites_note": "Health facilities AND schools are CANDIDATE vaccination sites only. No site has been verified as an actual vaccination location. School ids are namespaced 'school_<osm_id>'; health facility ids are unchanged OSM ids. REAL capacities are missing for both classes (blank capacity column).",
   "balanced_ot_note": "Balanced optimal transport requires sum(x) == sum(y). Facility capacities are MISSING (OSM has no capacity data), so this dataset is NOT yet ready for real-world capacity-constrained optimization. Use synthetic capacities (labeled) for method development only.",
-  "capacity_status": "missing - no verified capacity source integrated yet"
+  "capacity_status": "missing - no verified capacity source integrated yet",
+  "road_distance_status": "unavailable: local OSRM not reachable; the stale matrix (built for the previous 320-site dataset) was removed from data/processed/case1/. Restart OSRM (scripts/start_osrm.sh) and rerun scripts/run_pipeline.py --from-existing to rebuild it for the combined sites. Road distances are never substituted with straight-line values."
 }

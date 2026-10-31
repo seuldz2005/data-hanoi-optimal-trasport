@@ -20,11 +20,11 @@ def test_capacity_radius_bad_max():
     assert capacity_radius(5, -2) == 3
 
 
-def test_colors_cover_six_types():
+def test_colors_cover_health_and_school_types():
     assert set(FACILITY_TYPE_COLORS) == {
-        "hospital", "clinic", "pharmacy", "dentist", "doctors", "Unknown",
+        "hospital", "clinic", "pharmacy", "dentist", "doctors", "Unknown", "school",
     }
-    assert len(set(FACILITY_TYPE_COLORS.values())) == 6   # six distinct colors
+    assert len(set(FACILITY_TYPE_COLORS.values())) == 7   # seven distinct colors
 
 
 def test_colors_valid_hex():
@@ -48,5 +48,6 @@ def test_facility_color_covers_case1_data():
     import pandas as pd
 
     fac = pd.read_csv("data/processed/case1/facilities.csv", dtype=str)
-    for t in set(fac["facility_type"].fillna("Unknown")):
+    types = fac["facility_type"].fillna("Unknown").where(fac["site_class"] != "school", "school")
+    for t in set(types):
         facility_color(t)  # must not raise for any type in the shipped data

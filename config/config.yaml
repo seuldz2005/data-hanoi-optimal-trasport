@@ -22,6 +22,8 @@ paths:
   raw: data/raw
   interim: data/interim
   processed: data/processed
+  # Case 2 education export reused as Case 1 school vaccination candidates.
+  school_candidates_input: case2/scenario2_education_facilities.csv
   outputs:
     # Case 1 (vaccination) outputs live in case1/, Case 2 (schools) in case2/.
     # boundaries is shared by both cases (stays at processed/ root).
@@ -29,6 +31,7 @@ paths:
     population: case1/population.csv
     facilities: case1/facilities.csv
     distance_matrix: case1/distance_matrix.csv
+    road_distance_matrix: case1/road_distance_matrix.csv
     metadata: case1/dataset_metadata.json
 
 sources:

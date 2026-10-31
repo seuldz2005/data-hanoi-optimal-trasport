@@ -2,14 +2,17 @@
 
 Runs a greedy capacity-constrained assignment (children -> facilities)
 using SYNTHETIC capacities (clearly labeled), then renders an interactive
-folium map: commune choropleth (under-5 population), facility markers
-(sized by synthetic capacity, colored per type), and assignment lines.
+folium map: commune choropleth (under-5 population), candidate-site
+markers (health facilities + school candidates, sized by synthetic
+capacity, colored per type/class), and assignment lines.
 
 This is a data-usability DEMO, not the research OT solver.
 Never present the synthetic capacities or this demo's allocation as real.
+No site (health facility or school) is a verified vaccination location.
 
 Usage:
     python scripts/make_map.py  # requires local OSRM, car profile
+    python scripts/make_map.py --haversine
 Output:
     data/processed/case1/allocation_demo.csv
     data/processed/case1/allocation_map.html
@@ -87,6 +90,18 @@ def main(osrm_url: str | None = "http://127.0.0.1:5000") -> int:
     pop = pd.read_csv(PROCESSED / "case1" / "population.csv")
     fac = pd.read_csv(PROCESSED / "case1" / "facilities.csv")
     fac["facility_name"] = fac["facility_name"].fillna("Unnamed facility").map(lambda v: escape(str(v)))
+    # School candidates (Case 2 education export) render as ONE
+    # distinguishable class: a single cyan "school candidate" layer and
+    # color, granular OSM type (school/kindergarten/...) kept in tooltips.
+    school_mask = (
+        fac["site_class"].eq("school")
+        if "site_class" in fac.columns
+        else pd.Series(False, index=fac.index)
+    )
+    fac["layer_key"] = np.where(
+        school_mask, "school", fac["facility_type"].fillna("Unknown")
+    )
+    n_school = int(school_mask.sum())
     D = pd.read_csv(PROCESSED / "case1" / "distance_matrix.csv", index_col="commune_id") if osrm_url is None else None
     bnd = gpd.read_file(PROCESSED / "hanoi_boundaries.geojson")
     road = osrm_url is not None
@@ -202,6 +217,21 @@ def main(osrm_url: str | None = "http://127.0.0.1:5000") -> int:
         )
     )
 
+    # Independent outlines survive when the population choropleth is hidden.
+    folium.GeoJson(
+        bnd[["commune_id", "commune_name", "geometry"]].to_json(),
+        name="Ranh giới xã/phường (GADM 4.1)",
+        show=True,
+        style_function=lambda _: {
+            "color": "#334155", "weight": 1.2, "opacity": 0.85,
+            "fill": False, "fillOpacity": 0,
+        },
+        tooltip=folium.GeoJsonTooltip(
+            ["commune_name"], aliases=["Xã/phường (ranh lịch sử GADM 4.1)"],
+            sticky=False,
+        ),
+    ).add_to(m)
+
     # Commune centroids are optional because 584 labels would clutter the map.
     for r in pop.itertuples(index=False):
         folium.CircleMarker(
@@ -232,38 +262,44 @@ def main(osrm_url: str | None = "http://127.0.0.1:5000") -> int:
             tooltip=f"{r.commune_id} → {r.facility_id}: {r.children_assigned:,.0f} children; {r.distance_km:.1f} km ({distance_label})",
         ).add_to(route_layers[is_primary, band])
 
-    # One switch per facility type: practical filtering without custom JS.
+    # One switch per health facility type plus one for school candidates.
     facility_layers = {}
-    for facility_type in sorted(fac_gdf["facility_type"].fillna("Unknown").unique()):
-        facility_layers[facility_type] = folium.FeatureGroup(
-            name=f"MAP-1: Facility — {facility_type}", show=True
+    for layer_key in sorted(fac_gdf["layer_key"].unique()):
+        label = "school candidate (unverified)" if layer_key == "school" else layer_key
+        facility_layers[layer_key] = folium.FeatureGroup(
+            name=f"MAP-1: Facility — {label}", show=True
         ).add_to(m)
 
-    # Facility markers: sized by synthetic capacity, colored by type.
+    # Facility markers: sized by synthetic capacity, colored by type/class.
     for r in fac_gdf.itertuples(index=False):
         facility_type = r.facility_type if pd.notna(r.facility_type) else "Unknown"
+        school_line = (
+            "<br>Trường học — ứng viên tiêm chủng (chưa thẩm định)"
+            if r.layer_key == "school" else ""
+        )
         folium.CircleMarker(
             [r.latitude, r.longitude],
             # Area proportional to synthetic capacity (radius ~ sqrt); floor 3px.
             radius=capacity_radius(r.capacity, fac_gdf["capacity"].max()),
-            color=facility_color(facility_type),
-            fill=True, fill_color=facility_color(facility_type), fill_opacity=0.8,
+            color=facility_color(r.layer_key),
+            fill=True, fill_color=facility_color(r.layer_key), fill_opacity=0.8,
             popup=folium.Popup(
                 f"<b>{r.facility_name}</b><br>Loại: {facility_type}"
                 f"<br>Mã OSM: {r.facility_id}"
+                f"<br>Vaccination site status: candidate (unverified){school_line}"
                 f"<br>Simulated capacity: {r.capacity:,.0f}"
                 f"<br>Simulated assigned load: {r.assigned_load:,.0f} trẻ"
                 "<br><i>Công suất giả lập — không phải số liệu thực tế</i>"
             ),
             tooltip=f"{r.facility_name} ({facility_type})",
-        ).add_to(facility_layers[facility_type])
+        ).add_to(facility_layers[r.layer_key])
 
     # --- Map 2 (Case 2): sampled children 5-14 + schools, same HTML file. ---
     children_layer = folium.FeatureGroup(
         name="MAP-2: Children aged 5–14 (10,000-point sample, WorldPop 2020)", show=False
     ).add_to(m)
     school_layer = folium.FeatureGroup(
-        name="MAP-2: Schools (332, OSM)", show=False
+        name=f"MAP-2: Schools ({n_school}, OSM)", show=False
     ).add_to(m)
     children_path = PROCESSED / "case2" / "scenario2_sampled_children.geojson"
     schools_path = PROCESSED / "case2" / "scenario2_education_facilities.csv"
@@ -284,7 +320,9 @@ def main(osrm_url: str | None = "http://127.0.0.1:5000") -> int:
 
     folium.LayerControl(collapsed=False, position="topright").add_to(m)
     title = (
-        "HÀ NỘI — Map 1: phân bổ children under 5 đến cơ sở y tế; Map 2: điểm trẻ 5–14 tuổi và trường học. "
+        "HÀ NỘI — Map 1: phân bổ children under 5 đến "
+        f"{len(fac) - n_school} cơ sở y tế và {n_school} trường học ứng viên tiêm chủng "
+        f"(candidate, chưa thẩm định); Map 2: điểm trẻ 5–14 tuổi và trường học. "
         f"Population: Meta HRSL/WorldPop 2020; boundaries: GADM 2022; facilities: OpenStreetMap; distance: {distance_label}. "
         "The greedy allocation and equal capacities are synthetic, not official OT results. Vaccination services have not been verified."
     )
@@ -311,22 +349,22 @@ def main(osrm_url: str | None = "http://127.0.0.1:5000") -> int:
     """
     m.get_root().html.add_child(folium.Element(guide))
 
-    # On-map legend: six facility types with live counts.
-    type_counts = fac_gdf["facility_type"].fillna("Unknown").value_counts()
+    # On-map legend: health facility types + school candidates, live counts.
+    type_counts = fac_gdf["layer_key"].value_counts()
     legend_rows = "".join(
         f"<div style='margin:3px 0'><span style='display:inline-block;width:11px;height:11px;"
         f"border-radius:6px;background:{FACILITY_TYPE_COLORS[t]};vertical-align:-1px'></span> "
-        f"{t}: {int(type_counts.get(t, 0))}</div>"
+        f"{'school candidate' if t == 'school' else t}: {int(type_counts.get(t, 0))}</div>"
         for t in sorted(FACILITY_TYPE_COLORS)
     )
     legend = f"""
     <div class="facility-legend" style="position:fixed;right:10px;bottom:60px;z-index:9999;width:205px;
       background:rgba(255,255,255,.95);padding:10px 12px;border-radius:5px;
       box-shadow:0 1px 6px #777;font:12px/1.45 sans-serif">
-      <b>Cơ sở y tế theo loại</b><br>
+      <b>Ứng viên tiêm chủng theo loại</b><br>
       {legend_rows}
-      <div style="margin-top:6px;color:#555;font-size:11px">Loại theo OSM; chưa thẩm định
-      chức năng tiêm chủng.</div>
+      <div style="margin-top:6px;color:#555;font-size:11px">Loại theo OSM; trường học là
+      ứng viên tiêm chủng, chưa thẩm định chức năng tiêm chủng.</div>
     </div>
     """
     m.get_root().html.add_child(folium.Element(legend))

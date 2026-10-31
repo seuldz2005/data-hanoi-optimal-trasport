@@ -128,6 +128,27 @@ def build_road_distance_matrix(
     return result
 
 
+def osrm_available(base_url: str) -> bool:
+    """Return True if a local OSRM answers a one-segment route request.
+
+    Args:
+        base_url: OSRM base URL (local host only, see ``_base_url``).
+
+    Returns:
+        False on any unreachable/invalid/misrouted endpoint — callers must
+        then treat road distances as unavailable, never guess them.
+    """
+    try:
+        _request(
+            _base_url(base_url), "route",
+            [[20.96, 105.78], [20.961, 105.781]],
+            {"overview": "false"},
+        )
+    except RoadRoutingError:
+        return False
+    return True
+
+
 def route_coordinates(
     origin_lat, origin_lon, dest_lat, dest_lon, base_url: str
 ) -> list[list[float]]:

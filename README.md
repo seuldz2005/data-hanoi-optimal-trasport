@@ -4,9 +4,9 @@ A small, reusable data package for allocating children to vaccination facilities
 
 ## Included data
 
-- **Case 1:** 584 communes, estimated children under 5, 320 health facilities, and distance matrices.
-- **Case 2:** a population raster for ages 5–14, 10,000 sample points, and 332 schools.
-- **Interactive maps:** [docs/index.html](docs/index.html) (road distance) and [docs/index_compare.html](docs/index_compare.html) (toggle between road and straight-line).
+- **Case 1:** 584 communes, estimated children under 5, 1,804 candidate sites (320 health facilities + 1,484 education sites), and a 584 × 1,804 distance matrix.
+- **Case 2:** a population raster for ages 5–14, 10,000 sample points, and 1,484 education sites.
+- **Interactive maps:** [docs/index.html](docs/index.html) (straight-line distance) and [docs/index_compare.html](docs/index_compare.html) (road comparison unavailable until OSRM is rebuilt).
 
 > Population values are estimates. Facility capacities are unavailable. The demo uses synthetic equal capacities and is not an official result.
 
@@ -17,10 +17,10 @@ All distances are in **kilometres**. IDs connect files: `commune_id` identifies 
 | File | Purpose | Main fields / use |
 |---|---|---|
 | `data/processed/case1/population.csv` | Case 1 demand: one row per commune with the estimated number of children under 5. | Use `children_under_5` as demand. The centroid columns provide origin coordinates. |
-| `data/processed/case1/facilities.csv` | Candidate health facilities for Case 1. | Contains names, types, and coordinates. `capacity` is empty because verified capacity is unavailable. |
-| `data/processed/case1/sites_capacity.csv` | **Synthetic** integer capacities for Case 1 experiments only. | `facility_id`, `capacity` (integer), `capacity_source=synthetic`, `capacity_unit`. Same facility order as the distance matrix; the integer total preserves estimated demand (2,252–2,253 per facility). Not verified vaccination throughput. |
-| `data/processed/case1/distance_matrix.csv` | Straight-line distance from every commune to every health facility. | Rows are communes and columns are facilities. Use as the baseline cost matrix. |
-| `data/processed/case1/road_distance_matrix.csv` | OSRM road distance from every commune centroid to every health facility. | Same layout as the straight-line matrix. Use when realistic car-road distances are preferred. |
+| `data/processed/case1/facilities.csv` | Candidate health facilities and schools for Case 1; school IDs use `school_`. | Contains names, types, and coordinates. `capacity` is empty because verified capacity is unavailable. |
+| `data/processed/case1/sites_capacity.csv` | **Synthetic** integer capacities for Case 1 experiments only. | `facility_id`, `capacity` (integer), `capacity_source=synthetic`, `capacity_unit`. Same facility order as the distance matrix; the integer total preserves estimated demand (399–400 per site). Not verified vaccination throughput. |
+| `data/processed/case1/distance_matrix.csv` | Straight-line distance from every commune to every candidate site. | Rows are communes and columns are facilities. Use as the baseline cost matrix. |
+| `data/processed/case1/road_distance_matrix.csv` | OSRM road distance from every commune centroid to every candidate site. | **Currently unavailable:** the old 320-site matrix was invalidated; start local OSRM and rebuild for 1,804 sites. Never substitute straight-line values as road distances. |
 | `data/processed/case1/allocation_demo.csv` | Greedy example using synthetic equal facility capacities. | Contains commune–facility pairs, assigned children, and distance. It is not an official or optimal result. |
 | `data/processed/case2/scenario2_education_facilities.csv` | Candidate schools for Case 2. | Contains school names, types, and coordinates. `capacity` is empty because verified seat counts are unavailable. |
 
@@ -248,3 +248,17 @@ Please cite the original providers and review their terms before redistribution 
    https://www.openstreetmap.org/copyright
 
 Accessed October 2026.
+
+## Rebuild Case 1 with school candidates
+
+```bash
+python scripts/merge_school_inventory.py
+python scripts/run_pipeline.py --from-existing
+python scripts/export_synthetic_capacity.py
+python scripts/make_map.py --haversine
+cp data/processed/case1/allocation_map.html docs/index.html
+```
+
+Reuses existing population and Case 2 schools; no population download. Schools remain unverified vaccination candidates. Real capacities remain missing; all allocation loads are synthetic. Local OSRM is required to rebuild road distances.
+
+School expansion: 1,332 public Overpass records checked against the original 332 education points; 180 duplicates skipped (168 exact node IDs, 12 same-name locations within 150 m), 1,152 added. Original points retained, including kindergarten/university/college. Audit: `data/processed/case2/scenario2_merge_log.csv`; metadata records provenance. Polygon centers are not surveyed entrances.

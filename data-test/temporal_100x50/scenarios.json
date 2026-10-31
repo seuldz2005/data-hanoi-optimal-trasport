@@ -1,0 +1,22 @@
+{
+  "package": "temporal_100x50",
+  "hours": 4,
+  "scenarios": {
+    "baseline": {
+      "mode": "balanced",
+      "rule": "per-hour site capacity sums equal per-hour arrivals"
+    },
+    "surplus": {
+      "mode": "surplus",
+      "rule": "per-hour site capacity sums = ceil(1.1 * per-hour arrivals)"
+    }
+  },
+  "lambda_grid": [
+    0,
+    1,
+    5
+  ],
+  "lambda_note": "optional congestion/latency weight grid for future queue experiments; no solver architecture implemented in this package",
+  "routing": "complete graph by default: every origin commune may send arrivals to any candidate site; no travel limit imposed",
+  "service_model": "capacity_by_hour.csv is hourly SERVICE capacity; vaccine stock/supply is a separate quantity, and unused service capacity cannot be banked into later hours"
+}

@@ -8,7 +8,7 @@
   },
   "summary": {
     "hanoi_grid_total": 1041039.6144911898,
-    "education_facilities": 332
+    "education_facilities": 1484
   },
   "outputs": {
     "population_raster": "scenario2_population_5_14_hanoi.tif",
@@ -50,6 +50,34 @@
   "limitations": [
     "OSM school capacities are unavailable; capacity remains missing.",
     "Samples are Monte Carlo draws from modeled raster counts, not observed individual children.",
-    "GADM boundary vintage differs from WorldPop 2020."
-  ]
+    "GADM boundary vintage differs from WorldPop 2020.",
+    "Merged rows carry namespaced ids osm_<type>_<id>; real OSM element type/id stay recoverable and cannot collide with baseline numeric ids.",
+    "Added schools are unverified vaccination-site CANDIDATES; polygon centers are not gates; capacities remain missing.",
+    "Rows flagged outside_gadm41_historical_boundary in the merge log are kept: the Overpass Hanoi boundary is the inclusion source and the GADM 4.1 vintage differs."
+  ],
+  "merge": {
+    "merged_at_utc": "2026-10-31T20:44:39.415709+00:00",
+    "script": "scripts/merge_school_inventory.py",
+    "merge_log": "scenario2_merge_log.csv",
+    "baseline": {
+      "rows_preserved_verbatim": 332,
+      "source": "HOT OSM education facilities export (points only) via HDX, ODbL 1.0 — the historical 332-row baseline; original numeric facility_ids unchanged"
+    },
+    "inventory_source": {
+      "file": "data/processed/hanoi_schools_inventory/hanoi_schools_geolocated.csv",
+      "sha256": "42b8c842c9b7328f9f73feda7a1f86a51a59ba596268d1d55141a5fd4b9b073f",
+      "rows": 1332,
+      "provider": "OpenStreetMap via Overpass",
+      "license": "ODbL 1.0 (OpenStreetMap contributors)",
+      "coordinate_note": "polygon centers, not surveyed gates"
+    },
+    "dedup_policy": "exact OSM node id, else identical normalized Vietnamese name within 150 m of the SAME baseline row; nearest-location alone is never a duplicate reason (the inventory match_status many-to-one proximity matches are informational only); genuinely separate same-name branches farther than 150 m are preserved",
+    "previously_added_rows": 0,
+    "added": 1152,
+    "already_present": 0,
+    "skipped_duplicate_exact_osm_id": 168,
+    "skipped_duplicate_name_within_150m": 12,
+    "rejected_invalid_coordinates": 0,
+    "flagged_outside_gadm41_historical_boundary": 10
+  }
 }

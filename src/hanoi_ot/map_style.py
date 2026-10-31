@@ -12,13 +12,16 @@ _MARKER_FLOOR_PX = 3.0
 _MARKER_MAX_EXTRA_PX = 6.0
 
 # Six OSM facility categories on the Case 1 map, "Unknown" catching the
-# facilities with no type tag. Color-blind-friendly qualitative palette.
+# facilities with no type tag, plus "school" for school-class candidates
+# (Case 2 education export) rendered as one distinguishable class.
+# Color-blind-friendly qualitative palette.
 FACILITY_TYPE_COLORS: dict[str, str] = {
     "hospital": "#e41a1c",   # red
     "clinic": "#ff7f00",     # orange
     "pharmacy": "#377eb8",   # blue
     "dentist": "#4daf4a",   # green
     "doctors": "#984ea3",   # purple
+    "school": "#17becf",   # cyan - school vaccination CANDIDATES (class color)
     "Unknown": "#999999",   # grey
 }
 

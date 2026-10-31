@@ -2,8 +2,8 @@
 
 Loads, validates, and prepares geographic + demographic inputs
 (population, boundaries, facilities, distances) for optimal transport
-modeling. Case 1 (vaccination) is in scope; Case 2 (schools) is
-architecturally supported but not yet wired.
+modeling. Case 1 (vaccination) candidate sites combine health facilities
+with Case 2 schools (all candidates, none verified).
 """
 
 __version__ = "0.1.0"

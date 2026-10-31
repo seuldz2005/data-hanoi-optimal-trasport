@@ -1,0 +1,31 @@
+{
+  "district": "Hoài Đức (GADM 4.1 historical boundary)",
+  "communes": 20,
+  "sites": 30,
+  "site_classes": {
+    "school": 28,
+    "health_facility": 2
+  },
+  "total_modeled_children": 19769,
+  "distance": "haversine kilometres, not road distance",
+  "capacity": "synthetic balanced integers, no operational time period",
+  "demand": "HRSL 2020 estimated under-5 population; not observed vaccination demand",
+  "candidate_status": "unverified vaccination sites; school polygon centers may not be entrances",
+  "selection": "All 20 historical Hoai Duc communes; 2 named health stations plus 28 schools. Nearest site per centroid, then spatial spread. Original source IDs preserved.",
+  "solver": {
+    "method": "exact_lp",
+    "status": "success",
+    "objective": 1.1473997904971012,
+    "runtime": 0.004513208055868745,
+    "iterations": 74,
+    "error": 6.245004513516506e-17
+  },
+  "mean_distance_km": 1.147399790497101,
+  "total_child_km": 22682.94645833719,
+  "inputs": {
+    "case1/population.csv": "7725fde6ae67bf5628af21f60d41f6b92affcf736f15d3dfebf3ba494634ddbb",
+    "case1/facilities.csv": "2d9d0dea07391baac0f88c45602b65345305cb5008718e96668effba9f37d3ef",
+    "case1/distance_matrix.csv": "be26940590b630e89ea1a03853196532c841775b52ef96308ea400010ba2e94d",
+    "hanoi_boundaries.geojson": "8771a6da5533461419c8cedb1e57dddb5d1b9152b8a6235c91904aff82301d22"
+  }
+}

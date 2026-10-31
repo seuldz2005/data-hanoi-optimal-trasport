@@ -1,0 +1,49 @@
+{
+  "package": "temporal_100x50",
+  "generated_date": "2026-11-01",
+  "seed": 20260101,
+  "communes": 100,
+  "sites": 50,
+  "hours": 4,
+  "selection": "100 contiguous peripheral communes grown from the HoàiĐức/QuốcOai seed by exact polygon-touch BFS-nearest-to-seed-centroid, excluding the 12 historical central urban districts (HoànKiếm, BaĐình, ĐốngĐa, HaiBàTrưng, CầuGiấy, ThanhXuân, TâyHồ, HoàngMai, LongBiên, BắcTừLiêm, NamTừLiêm, HàĐông); connectivity verified",
+  "districts": {
+    "QuốcOai": 21,
+    "HoàiĐức": 20,
+    "ThạchThất": 20,
+    "ChươngMỹ": 20,
+    "ĐanPhượng": 9,
+    "PhúcThọ": 7,
+    "ThanhOai": 2,
+    "SơnTây": 1
+  },
+  "interpretation": "communes are demand origins SERVED by the 50 candidate sites (complete routing graph), not 100 on-site facilities",
+  "arrivals": "integer children per commune per hour drawn in [ceil(0.2x), floor(0.3x)] with x the commune children_under_5, sum preserved; constrained sequential sampling over a random hour permutation with feasible remainder; small infeasible totals rejected",
+  "capacity": "balanced: per-hour totals split across sites with largest_remainder_split over hour-rotated site order; surplus per-hour total = ceil(1.1 * arrivals); synthetic, no real operational capacity in facilities.csv",
+  "demand": "children_under_5 is the HRSL 2020 integer proxy estimate (Meta HRSL under-5 via HDX), NOT observed vaccine demand",
+  "distance": "haversine kilometres subset by source IDs from data/processed/case1/distance_matrix.csv; NOT road distance, no road data forged",
+  "coordinate_caveats": "GADM 4.1 historical commune boundaries differ from current Hanoi administrative units; facility coordinates are OSM polygon centers (school entrances unverified); site status is candidate, unverified",
+  "site_classes": {
+    "school": 45,
+    "health_facility": 5
+  },
+  "total_children": 99693,
+  "inputs": {
+    "case1/population.csv": "7725fde6ae67bf5628af21f60d41f6b92affcf736f15d3dfebf3ba494634ddbb",
+    "case1/facilities.csv": "2d9d0dea07391baac0f88c45602b65345305cb5008718e96668effba9f37d3ef",
+    "case1/distance_matrix.csv": "be26940590b630e89ea1a03853196532c841775b52ef96308ea400010ba2e94d",
+    "hanoi_boundaries.geojson": "8771a6da5533461419c8cedb1e57dddb5d1b9152b8a6235c91904aff82301d22"
+  },
+  "outputs": {
+    "population.csv": "bde0c5f35da852d366e38881640b5841ad51ea7b1ab615787a391723cf953dfd",
+    "facilities.csv": "f58b8582c928137ac60dccc7ace914d41eb588dc3aa79536b13aef5284032b79",
+    "sites_capacity.csv": "b948f2a7be93f88651fa4cb8f08696b21a4ca1fe0f976bfda42e429f5ac4de94",
+    "distance_matrix.csv": "db20ba47d4ff6a623a2b454b4ee4e720f87a4b65e13b8af87070511830b694be",
+    "capacity_by_hour.csv": "622db1f88bac36e64cd14b90e75764c500e721959945551e29b0d8b70ca368d2",
+    "commune_boundaries.geojson": "4f38328863de8ad6b086e95e86be354586c5e0b2f86f623ffd069362e26353dc",
+    "scenarios.json": "08cbebf6f03581249f15f223c9666feafc54ae0a470e873f3c836e594a1f772e",
+    "arrivals/hour_1.csv": "ee276bf22fdf38bae36f49da2947a8016cef20683264c03d044cfa65e9280ff7",
+    "arrivals/hour_2.csv": "f98c8c3158e47b4893bb1b5276709dbc4051d50764ca2a00d8919fa03022dfa9",
+    "arrivals/hour_3.csv": "9b46cdcfb1ff573571aa1e84ec9c836e2401ec6bfe0cc0123c9844c65ef3b9d9",
+    "arrivals/hour_4.csv": "2c9a45efb1d9c58e33b7705275902e2fd5fdac3dbc0168335a450ab774a390a9"
+  }
+}

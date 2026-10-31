@@ -1,0 +1,26 @@
+{
+  "package": "temporal_100x50",
+  "scenario": "baseline",
+  "solver": "scipy.optimize.linprog/highs (sparse)",
+  "hour_1": {
+    "status": "success",
+    "total_child_km": 43736.113,
+    "arrivals": 25319
+  },
+  "hour_2": {
+    "status": "success",
+    "total_child_km": 41744.153,
+    "arrivals": 24731
+  },
+  "hour_3": {
+    "status": "success",
+    "total_child_km": 43004.539,
+    "arrivals": 24827
+  },
+  "hour_4": {
+    "status": "success",
+    "total_child_km": 42488.202,
+    "arrivals": 24816
+  },
+  "total_child_km_4h": 170973.007
+}

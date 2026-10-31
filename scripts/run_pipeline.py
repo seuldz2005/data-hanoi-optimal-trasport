@@ -3,6 +3,7 @@
 Usage:
     python scripts/run_pipeline.py            # full real-data pipeline
     python scripts/run_pipeline.py --synthetic  # tiny synthetic fixture
+    python scripts/run_pipeline.py --from-existing
     python scripts/run_pipeline.py --force-download
 """
 
@@ -13,7 +14,7 @@ import json
 import sys
 
 from hanoi_ot.config import setup_logging
-from hanoi_ot.pipeline import PipelineError, run, run_synthetic
+from hanoi_ot.pipeline import PipelineError, run, run_from_existing, run_synthetic
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -31,6 +32,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Run against the tiny synthetic fixture instead of real data.",
     )
     parser.add_argument(
+        "--from-existing", action="store_true",
+        help="Rebuild Case 1 combined candidate sites (health + schools) from "
+             "the existing CSVs: no downloads, no population rerun.",
+    )
+    parser.add_argument(
         "--force-download", action="store_true",
         help="Re-download raw sources even if already present.",
     )
@@ -39,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.synthetic:
             summary = run_synthetic()
+        elif args.from_existing:
+            summary = run_from_existing()
         else:
             summary = run(force_download=args.force_download)
     except PipelineError as e:
