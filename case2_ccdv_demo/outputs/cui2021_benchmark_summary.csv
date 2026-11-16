@@ -1,0 +1,7 @@
+method,n_schools,within_5pct,pct_within_5pct,empty_zones,overloaded_gt_5pct,min_load,max_load,std_load,students_above_capacity,allocated_students,unassigned_students,unassigned_sample_pct,unassigned_area_km2,unassigned_area_pct,mean_km,median_km,p90_km,max_km,pct_not_nearest_school,seconds
+voronoi_plain,1215,68,5.6,0,444,8,5175,613.9,275144,1041039,0,0.0,0.0,0.0,0.748,0.523,1.634,7.27,0.0,0.2
+old_ccvd_buffer_center_voronoi,1215,1097,90.3,95,20,0,18249,810.5,87477,1033631,7408,0.65,57.13,1.7,2.071,1.192,5.649,14.04,69.29,81.5
+cui2021_commune_atomic,1215,33,2.7,683,491,0,10717,1262.7,587600,1041039,0,0.0,0.0,0.0,13.488,11.98,17.822,57.63,99.77,20.61
+cui2021_grid500m_atomic,1215,923,76.0,40,251,0,2019,190.5,48288,1041039,0,0.0,0.0,0.0,3.4,2.025,5.939,57.28,90.48,48.37
+cui2021_grid_adaptive_atomic,1215,1215,100.0,0,0,814,886,17.0,1965,1022572,18467,1.66,87.95,2.6,2.97,1.791,5.364,70.28,88.12,75.33
+cui2021_commune_fractional,1215,1214,99.9,0,0,571,898,10.8,1083,1041039,0,0.0,0.0,0.0,3.553,2.084,5.76,67.06,91.88,36.54
